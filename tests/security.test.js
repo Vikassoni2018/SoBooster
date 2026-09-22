@@ -53,6 +53,10 @@ require.cache[dbPath].exports = fakeDb;
 /* ---------- build an app that mirrors server.js ---------- */
 const express = require("express");
 const { requireSession } = require(path.join(SERVER, "middleware/auth"));
+const {
+  verifyAppProxy,
+  proxySignature,
+} = require(path.join(SERVER, "middleware/verifyAppProxy"));
 const webhookRoutes = require(path.join(SERVER, "routes/webhookRoute"));
 const authController = require(path.join(SERVER, "controllers/authController"));
 const { serializeForScript } = require(path.join(SERVER, "utils/html"));
@@ -72,6 +76,7 @@ app.get("/api/auth/callback", authController.callback);
 app.get("/protected", requireSession, (req, res) =>
   res.json({ shop: req.shop, storeId: req.storeId })
 );
+app.get("/proxy", verifyAppProxy, (req, res) => res.json({ shop: req.shop }));
 
 /* ---------- helpers ---------- */
 function makeToken(overrides = {}, secret = process.env.SHOPIFY_API_SECRET) {
@@ -115,6 +120,40 @@ function check(name, condition, detail) {
   const server = app.listen(0);
   await new Promise((r) => server.once("listening", r));
   const base = `http://127.0.0.1:${server.address().port}`;
+
+  console.log("\nApp proxy authentication");
+  {
+    const official = new URL(
+      "https://example.com/proxy?extra=1&extra=2&shop=%7Bshop%7D.myshopify.com&logged_in_customer_id=1&path_prefix=%2Fapps%2Fawesome_reviews&timestamp=1317327555"
+    );
+    check(
+      "signature matches Shopify's documented algorithm",
+      proxySignature(official, "hush") ===
+        "e71d571c0a35d531ae367189d59afd33ae5b56be274c77c9e8bd6ce42e256304"
+    );
+
+    let res = await fetch(`${base}/proxy?shop=good-shop.myshopify.com`);
+    check("unsigned proxy request -> 401", res.status === 401, `got ${res.status}`);
+
+    const proxyUrl = new URL(`${base}/proxy`);
+    proxyUrl.searchParams.set("shop", "good-shop.myshopify.com");
+    proxyUrl.searchParams.set("logged_in_customer_id", "");
+    proxyUrl.searchParams.set("path_prefix", "/apps/sobooster-filters");
+    proxyUrl.searchParams.set("timestamp", String(Math.floor(Date.now() / 1000)));
+    proxyUrl.searchParams.set(
+      "signature",
+      proxySignature(proxyUrl, process.env.SHOPIFY_API_SECRET)
+    );
+
+    res = await fetch(proxyUrl);
+    const body = await res.json();
+    check("valid proxy request -> 200", res.status === 200, `got ${res.status}`);
+    check("proxy request is pinned to its signed shop", body.shop === "good-shop.myshopify.com");
+
+    proxyUrl.searchParams.set("shop", "victim.myshopify.com");
+    res = await fetch(proxyUrl);
+    check("tampered proxy shop -> 401", res.status === 401, `got ${res.status}`);
+  }
 
   console.log("\nWebhook HMAC verification");
   {

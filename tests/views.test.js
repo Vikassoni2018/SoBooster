@@ -91,7 +91,7 @@ const PLAN_ROWS = [
     "the dashboard renders",
     "dashboard",
     { ...BASE, store: STORE_ROW },
-    ["<h1>Dashboard</h1>", "s-app-nav"]
+    ["heading=\"Dashboard\"", "Enabled filters", "Store setup", "Quick actions", "s-app-nav"]
   );
 
   console.log("\nHelp and support");

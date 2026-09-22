@@ -15,6 +15,7 @@ const planRoutes = require("./routes/planRoute");
 const filterRoutes = require("./routes/filterRoute");
 const supportRoutes = require("./routes/supportRoute");
 const webhookRoutes = require("./routes/webhookRoute");
+const storefrontRoutes = require("./routes/storefrontRoute");
 
 const REQUIRED_ENV = [
   "SHOPIFY_API_KEY",
@@ -70,6 +71,7 @@ app.use(noStore);
      app.use("/widgets", require("./routes/widgetRoute"));
    Mount them ABOVE dashboardRoutes, which owns "/". */
 app.use("/api/auth", authRoutes);
+app.use("/storefront", storefrontRoutes);
 app.use("/filters", filterRoutes);
 app.use("/plans", planRoutes);
 app.use("/support", supportRoutes);

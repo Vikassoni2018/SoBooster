@@ -7,23 +7,97 @@
   <link rel="stylesheet" href="/css/app.css">
 </head>
 
-<%#
-  The landing screen. Empty on purpose: the app is a fresh start, and the
-  first real feature belongs here. Add sections inside <main>.
-%>
-
 <body>
   <%- include("partials/nav") %>
 
-  <main class="shell shell--wide">
+  <%
+    var dashboardStats = typeof stats !== "undefined" ? stats : {
+      totalFilters: 0,
+      enabledFilters: 0,
+      visibleValues: 0
+    };
+    var storeName = store && store.store_name ? store.store_name : shop;
+    var storefrontUrl = "https://" + shop + "/collections/all";
+  %>
 
-    <header class="shell__header">
-      <div>
-        <h1>Dashboard</h1>
+  <s-page heading="Dashboard" inlineSize="large">
+    <s-button slot="primary-action" variant="primary" href="/filters">Manage filters</s-button>
+    <s-button slot="secondary-actions" href="<%= storefrontUrl %>" target="_blank">Preview storefront</s-button>
+
+    <s-stack direction="block" gap="base">
+      <s-banner heading="Storefront filtering is connected" tone="success">
+        <s-paragraph>
+          SoBooster is connected to <strong><%= storeName %></strong>. Enabled filters are published to your collection page.
+        </s-paragraph>
+      </s-banner>
+
+      <div class="dashboard-metrics" aria-label="Filter summary">
+        <s-box padding="base" background="base" border="base" borderRadius="base">
+          <p class="dashboard-metric__label">Enabled filters</p>
+          <p class="dashboard-metric__value"><%= dashboardStats.enabledFilters %></p>
+          <p class="dashboard-metric__help">Visible to shoppers when supported by Shopify.</p>
+        </s-box>
+        <s-box padding="base" background="base" border="base" borderRadius="base">
+          <p class="dashboard-metric__label">Filter groups</p>
+          <p class="dashboard-metric__value"><%= dashboardStats.totalFilters %></p>
+          <p class="dashboard-metric__help">Built-in and custom groups saved for this store.</p>
+        </s-box>
+        <s-box padding="base" background="base" border="base" borderRadius="base">
+          <p class="dashboard-metric__label">Available values</p>
+          <p class="dashboard-metric__value"><%= dashboardStats.visibleValues %></p>
+          <p class="dashboard-metric__help">Active values ready for storefront filtering.</p>
+        </s-box>
       </div>
-    </header>
 
-  </main>
+      <div class="dashboard-grid">
+        <s-section heading="Store setup">
+          <div class="setup-list">
+            <div class="setup-item">
+              <span class="setup-item__icon" aria-hidden="true">✓</span>
+              <div>
+                <p class="setup-item__title">App connected</p>
+                <p class="setup-item__copy"><%= shop %></p>
+              </div>
+              <s-badge tone="success">Complete</s-badge>
+            </div>
+            <div class="setup-item">
+              <span class="setup-item__icon" aria-hidden="true">✓</span>
+              <div>
+                <p class="setup-item__title">Filters configured</p>
+                <p class="setup-item__copy"><%= dashboardStats.enabledFilters %> filter groups are enabled.</p>
+              </div>
+              <s-badge tone="success">Complete</s-badge>
+            </div>
+            <div class="setup-item">
+              <span class="setup-item__icon setup-item__icon--info" aria-hidden="true">3</span>
+              <div>
+                <p class="setup-item__title">Check your storefront</p>
+                <p class="setup-item__copy">Preview the collection page after changing filters.</p>
+              </div>
+              <s-button href="<%= storefrontUrl %>" target="_blank" variant="tertiary">Preview</s-button>
+            </div>
+          </div>
+        </s-section>
+
+        <s-section heading="Quick actions">
+          <s-stack direction="block" gap="base">
+            <s-clickable href="/filters" padding="base" background="subdued">
+              <s-text type="strong">Manage filter groups</s-text>
+              <s-paragraph color="subdued">Enable, reorder and customize storefront filters.</s-paragraph>
+            </s-clickable>
+            <s-clickable href="/filters" padding="base" background="subdued">
+              <s-text type="strong">Refresh Shopify values</s-text>
+              <s-paragraph color="subdued">Sync vendors, product types, collections and options.</s-paragraph>
+            </s-clickable>
+            <s-clickable href="/support" padding="base" background="subdued">
+              <s-text type="strong">Help and support</s-text>
+              <s-paragraph color="subdued">Review setup guidance or contact support.</s-paragraph>
+            </s-clickable>
+          </s-stack>
+        </s-section>
+      </div>
+    </s-stack>
+  </s-page>
 </body>
 
 </html>

@@ -327,15 +327,25 @@ function mergeValues(group, rawValues, overrides) {
   const merged = (rawValues || []).map((entry) => {
     const value = typeof entry === "string" ? entry : entry.value;
     const count = typeof entry === "string" ? null : entry.count;
-    const override = byValue.get(String(value).toLowerCase());
+    const displayLabel = typeof entry === "string" ? value : entry.label || value;
+    const valueKey = String(value).toLowerCase();
+    const legacyCollectionKey = String(displayLabel).toLowerCase();
+    const override =
+      byValue.get(valueKey) ||
+      (group.source === "collection" ? byValue.get(legacyCollectionKey) : null);
 
-    if (override) byValue.delete(String(value).toLowerCase());
+    if (override) {
+      byValue.delete(valueKey);
+      byValue.delete(legacyCollectionKey);
+    }
 
     return {
       value,
       count: count === undefined ? null : count,
-      label: override?.label || value,
+      label: override?.label || displayLabel,
       swatch: override?.swatch || null,
+      handle: typeof entry === "string" ? null : entry.handle || null,
+      url: typeof entry === "string" ? null : entry.url || null,
       is_hidden: Boolean(override?.is_hidden),
       position: override?.position ?? null,
       customised: Boolean(override),
@@ -614,7 +624,7 @@ async function reorderGroups(storeId, orderedIds) {
     .map((id) => Number(id))
     .filter((id) => known.has(id));
 
-  if (ids.length !== groups.length) {
+  if (ids.length !== groups.length || new Set(ids).size !== groups.length) {
     throw new ValidationError("The new order does not list every filter.");
   }
 

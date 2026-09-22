@@ -1,0 +1,17 @@
+{
+  "blocks": {
+    "collection_filters": {
+      "name": "SoBooster collection filters",
+      "settings": {
+        "proxy_path": "App proxy path",
+        "proxy_path_info": "Change this only if the app proxy URL was customized in Shopify admin.",
+        "auto_apply": "Apply filters automatically",
+        "show_sort": "Show sorting",
+        "show_product_count": "Show product count",
+        "show_vendor": "Show product vendor",
+        "desktop_columns": "Desktop product columns",
+        "products_per_page": "Products per page"
+      }
+    }
+  }
+}

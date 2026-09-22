@@ -24,6 +24,7 @@ this app   owns what was DECIDED     shown, renamed, reordered, swatched
 - [Where filter values come from](#where-filter-values-come-from)
 - [Database](#database)
 - [The published configuration](#the-published-configuration)
+- [Theme app extension](#theme-app-extension)
 - [Tests](#tests)
 - [Assumptions, limitations and trade-offs](#assumptions-limitations-and-trade-offs)
 - [Scaling to 150,000 products](#scaling-to-150000-products)
@@ -38,6 +39,7 @@ this app   owns what was DECIDED     shown, renamed, reordered, swatched
 | `/filters` | **Filter settings.** Groups on the left in storefront order, the selected group's settings on the right. |
 | `/filters/config` | The whole configuration as JSON. Every change returns it. |
 | `/filters/published` | What a storefront would consume: enabled groups, visible values, nothing left to decide. |
+| `/storefront/filters` | Signed app-proxy endpoint consumed by the theme extension. |
 | `/filters/refresh` | Re-read the merchant's catalogue from Shopify. |
 | `/dashboard` (`/`) | Landing screen. Heading only. |
 | `/plans` | Free / Starter / Pro, with Shopify subscription billing. |
@@ -71,7 +73,7 @@ Fill in `.env`:
 | --- | --- |
 | `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET` | Partner Dashboard → your app → Configuration → Client credentials. |
 | `HOST` | Public HTTPS URL, no trailing slash. Must match the App URL in the Partner Dashboard, and the allowed redirect URL there must be `HOST` + `/api/auth/callback`. |
-| `SHOPIFY_SCOPES` | `read_products` is enough — it covers products, variants, options, collections, vendors and tags. |
+| `SHOPIFY_SCOPES` | `read_products,write_app_proxy` reads catalogue values and exposes the signed storefront configuration route. |
 | `TOKEN_ENCRYPTION_KEY` | 32 bytes, base64. Generate once and back it up: rotating it makes every stored Shopify token unreadable. |
 | `DB_*` | MySQL connection. |
 | `DUMMY_SHOPS` | Optional, comma-separated. Development stores that get a Shopify **test** charge rather than a real one. |
@@ -89,6 +91,10 @@ app from **Apps** in the Shopify admin.
 
 There is nothing to seed. On first open the app creates five default filter
 groups and reads the shop's catalogue.
+
+The repository is also a Shopify CLI project. After signing in with an account
+that can manage the app, use `shopify app dev` for a development preview or
+`shopify app deploy` to release the app configuration and theme extension.
 
 ---
 
@@ -260,6 +266,36 @@ what it is given without re-deciding anything:
 what the shopper reads. Keeping both is what lets a merchant rename a value
 without breaking links that are already shared.
 
+## Theme app extension
+
+`extensions/sobooster-collection-filters` contains the collection-page app
+block. It works on normal collection pages and `/collections/all`, renders
+Shopify's native filter URL parameters, and uses the app's published settings
+for group order, labels, display styles, hidden values, swatches, collapse
+state and multi-select behaviour.
+
+The block includes sorting, active-filter chips, clear all, dynamic Shopify
+counts, price ranges, collection navigation, and a mobile filter drawer. The
+configuration is loaded through `/apps/sobooster-filters`, which Shopify signs
+and proxies to `/storefront/filters`.
+
+To enable it:
+
+1. Add the filters the shop needs in Shopify Search & Discovery. Shopify only
+   exposes enabled native filters through `collection.filters`.
+2. Open the app and configure the corresponding SoBooster filters. Add Color
+   and Size using their real Shopify product-option names.
+3. Run `shopify app deploy`, or `shopify app dev` while developing.
+4. In Online Store > Themes > Customize, open the collection template, add
+   the **SoBooster collection filters** app block, and save.
+5. Add the same block to any separate collection template used by
+   `/collections/all`.
+
+Shopify doesn't expose Collection as a facet within another collection. The
+Collection group therefore renders as navigation between collections; the
+remaining groups filter the current collection with Shopify's native AND/OR
+semantics.
+
 ---
 
 ## Tests
@@ -305,9 +341,9 @@ list and the swatch editor.
   is no shop-level "every value of the Color option" query in the Admin API.
   Past the cap the screen says the list is partial. This is the first thing to
   change at catalogue scale — see below.
-- **Nothing consumes the published configuration yet.** The storefront filter
-  UI is a separate piece of work; this app produces the configuration and the
-  contract for it.
+- **Native storefront filters must also be enabled in Shopify Search &
+  Discovery.** The theme block uses `collection.filters`; an Admin setting
+  cannot make Shopify expose a facet that Shopify itself has not enabled.
 - **The refresh is synchronous.** A shop near the scan cap will wait several
   seconds for the Refresh button. It belongs in a background job.
 - **Catalogue values can go stale** between refreshes. A value deleted in
@@ -423,11 +459,10 @@ facet. Facets should exclude their own selection from their own counts, or
 multi-select becomes unusable: with Black ticked, the colour list still has to
 answer "and how many if I also tick Red?"
 
-Delivery is a theme app extension (an app block the merchant places) rather
-than injected script tags, with requests going through an App Proxy so they are
-same-origin and edge-cacheable. The first render should be server-side or
-cached HTML — a collection page that paints empty and fills in via JS loses
-both the CLS score and the crawler.
+Delivery is implemented as a theme app extension rather than injected script
+tags. Its configuration request goes through an App Proxy, so it is
+same-origin and edge-cacheable, while the filter controls and product results
+remain Shopify-native Liquid output.
 
 ### What would *not* change
 

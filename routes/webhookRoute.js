@@ -28,5 +28,16 @@ router.post(
   webhookController.customersRedact
 );
 router.post("/shop/redact", rawBody, verifyWebhook, webhookController.shopRedact);
+router.post("/compliance", rawBody, verifyWebhook, (req, res) => {
+  const topic = String(req.headers["x-shopify-topic"] || "").toLowerCase();
+  const handlers = {
+    "customers/data_request": webhookController.customersDataRequest,
+    "customers/redact": webhookController.customersRedact,
+    "shop/redact": webhookController.shopRedact,
+  };
+  const handler = handlers[topic];
+  if (!handler) return res.status(404).send("Unknown webhook topic");
+  return handler(req, res);
+});
 
 module.exports = router;

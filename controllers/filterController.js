@@ -8,6 +8,7 @@
 // toggling one filter does not reload the page or lose the merchant's place.
 const filterModel = require("../models/filterModel");
 const catalogue = require("../services/shopifyCatalog");
+const { buildPublishedFilters } = require("../services/publishedFilters");
 
 /** Never leak an internal message; a ValidationError is written for a human. */
 function fail(res, err, fallback) {
@@ -202,30 +203,7 @@ exports.refresh = async (req, res) => {
  */
 exports.getPublicConfig = async (req, res) => {
   try {
-    const groups = await filterModel.listGroupsWithValues(req.storeId);
-
-    const published = groups
-      .filter((group) => group.is_enabled)
-      .map((group) => ({
-        key: group.filter_key,
-        label: group.label,
-        source: group.source,
-        source_key: group.source_key,
-        display: group.display_type,
-        collapsed: group.collapsed,
-        max_visible: group.max_visible,
-        hide_empty: group.hide_empty,
-        multi_select: group.multi_select,
-        values: group.values
-          .filter((value) => !value.is_hidden && !value.missing)
-          .map((value) => ({
-            value: value.value,
-            label: value.label,
-            swatch: value.swatch,
-          })),
-      }));
-
-    return res.json({ shop: req.shop, filters: published });
+    return res.json(await buildPublishedFilters(req.storeId, req.shop));
   } catch (err) {
     return fail(res, err, "Could not load the filter configuration.");
   }

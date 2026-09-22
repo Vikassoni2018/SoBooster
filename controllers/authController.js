@@ -14,7 +14,7 @@ const STATE_COOKIE = "shopify_oauth_state";
 const STATE_TTL_SECONDS = 600;
 // Changing this forces every merchant to reinstall, so add a scope only when
 // the feature that needs it is actually being built.
-const SCOPES = process.env.SHOPIFY_SCOPES || "read_products";
+const SCOPES = process.env.SHOPIFY_SCOPES || "read_products,write_app_proxy";
 const REST_API_VERSION = process.env.SHOPIFY_API_VERSION || "2025-01";
 
 function appHost() {

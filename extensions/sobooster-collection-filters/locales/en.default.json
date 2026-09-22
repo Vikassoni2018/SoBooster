@@ -1,0 +1,25 @@
+{
+  "filters": {
+    "title": "Filters",
+    "refine": "Refine your results",
+    "open": "Filter and sort",
+    "close": "Close filters",
+    "apply": "Apply",
+    "apply_price": "Apply price",
+    "clear_all": "Clear all",
+    "active": "Active filters",
+    "sort_by": "Sort by",
+    "price_from": "From",
+    "price_to": "To",
+    "show_more": "Show more",
+    "show_less": "Show less",
+    "product_count": "{{ count }} products",
+    "missing_filter": "Enable this filter in Shopify Search & Discovery before it can appear on the storefront."
+  },
+  "products": {
+    "sold_out": "Sold out",
+    "sale": "Sale",
+    "no_results": "No products match your filters",
+    "pagination": "Collection pagination"
+  }
+}

@@ -305,6 +305,14 @@ function group(overrides) {
     check("the raw value is kept", find("Black").value === "Black");
     check("an untouched value uses its own name", find("Red").label === "Red");
     check("an untouched value is not marked customised", find("Red").customised === false);
+    const collectionValue = filters.mergeValues(
+      group({ source: "collection" }),
+      [{ value: "prom-dresses", label: "Prom Dresses", handle: "prom-dresses", url: "/collections/prom-dresses", count: 8 }],
+      [{ value: "Prom Dresses", label: "Evening Dresses", swatch: null, is_hidden: false, position: null }]
+    )[0];
+    check("collections publish a stable handle", collectionValue.value === "prom-dresses");
+    check("legacy collection-title overrides still apply", collectionValue.label === "Evening Dresses");
+    check("collection navigation metadata is preserved", collectionValue.url === "/collections/prom-dresses");
     check("a hidden value is kept and flagged",
       find("Blue") && find("Blue").is_hidden === true,
       "the settings screen has to show it to unhide it");
@@ -353,9 +361,12 @@ function group(overrides) {
       "material:"
     );
     check("a tag prefix yields its values", fromTags.length === 2, JSON.stringify(fromTags));
-    check("the prefix is stripped and capitalised",
-      fromTags.map((entry) => entry.value).sort().join(",") === "Cotton,Silk",
+    check("the exact Shopify tag is preserved",
+      fromTags.map((entry) => entry.value).sort().join(",") === "material:cotton,material:silk",
       fromTags.map((entry) => entry.value).join(","));
+    check("the prefix is stripped from the display label",
+      fromTags.map((entry) => entry.label).sort().join(",") === "Cotton,Silk",
+      fromTags.map((entry) => entry.label).join(","));
     check("an empty prefix matches nothing",
       catalogue.valuesFromTagPrefix(["material:cotton"], "").length === 0);
 
@@ -382,6 +393,12 @@ function group(overrides) {
     await refuses(
       "an unknown id is refused",
       filters.reorderGroups(7, [1, 2, 999]),
+      /every filter/
+    );
+
+    await refuses(
+      "a duplicated id is refused",
+      filters.reorderGroups(7, [1, 1, 2]),
       /every filter/
     );
 

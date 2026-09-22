@@ -1,0 +1,268 @@
+{% liquid
+  assign current_sort = collection.sort_by | default: collection.default_sort_by
+  assign filter_form_id = 'SoBoosterFilters-' | append: block.id
+  assign page_size = block.settings.products_per_page
+  assign active_filter_count = 0
+
+  for filter in collection.filters
+    if filter.type == 'price_range'
+      if filter.min_value.value or filter.max_value.value
+        assign active_filter_count = active_filter_count | plus: 1
+      endif
+    else
+      assign active_filter_count = active_filter_count | plus: filter.active_values.size
+    endif
+  endfor
+%}
+
+{% if collection %}
+  <sobooster-filters
+    class="sbf"
+    data-config-url="{{ block.settings.proxy_path | escape }}"
+    data-auto-apply="{{ block.settings.auto_apply }}"
+    data-design-mode="{{ request.design_mode }}"
+    data-missing-filter="{{ 'filters.missing_filter' | t | escape }}"
+    data-show-more="{{ 'filters.show_more' | t | escape }}"
+    data-show-less="{{ 'filters.show_less' | t | escape }}"
+    {{ block.shopify_attributes }}
+  >
+    <div class="sbf__backdrop" data-sbf-close hidden></div>
+    {% paginate collection.products by page_size %}
+      <div class="sbf__layout" style="--sbf-columns: {{ block.settings.desktop_columns }}">
+        <aside class="sbf__panel" id="{{ filter_form_id }}-panel" aria-label="{{ 'filters.title' | t | escape }}">
+          <div class="sbf__panel-head">
+            <div>
+              <h2>{{ 'filters.title' | t }}</h2>
+              <p>{{ 'filters.refine' | t }}</p>
+            </div>
+            {% if active_filter_count > 0 %}
+              <a class="sbf__reset" href="{{ collection.url }}">{{ 'filters.clear_all' | t }}</a>
+            {% endif %}
+            <button class="sbf__mobile-close" type="button" data-sbf-close aria-label="{{ 'filters.close' | t | escape }}">&times;</button>
+          </div>
+
+          <form id="{{ filter_form_id }}" action="{{ collection.url }}" method="get" data-sbf-form>
+            <input type="hidden" name="sort_by" value="{{ current_sort | escape }}" data-sbf-sort-hidden>
+
+            <div class="sbf__groups" data-sbf-groups>
+              {% for filter in collection.filters %}
+                <details
+                  class="sbf__group"
+                  data-native-filter
+                  data-filter-label="{{ filter.label | escape }}"
+                  data-filter-param="{{ filter.param_name | escape }}"
+                  data-filter-type="{{ filter.type | escape }}"
+                  open
+                >
+                  <summary class="sbf__summary">
+                    <span data-sbf-group-label>{{ filter.label | escape }}</span>
+                    <span class="sbf__summary-count">{% if filter.active_values.size > 0 %}{{ filter.active_values.size }}{% endif %}</span>
+                  </summary>
+
+                  <div class="sbf__group-body">
+                    {% case filter.type %}
+                      {% when 'boolean', 'list' %}
+                        <div class="sbf__options" data-sbf-options>
+                          {% for filter_value in filter.values %}
+                            {% assign input_id = filter_form_id | append: '-' | append: filter.param_name | handleize | append: '-' | append: forloop.index %}
+                            <label class="sbf__option" data-filter-option data-value="{{ filter_value.value | escape }}" data-label="{{ filter_value.label | escape }}">
+                              <input
+                                id="{{ input_id }}"
+                                type="checkbox"
+                                name="{{ filter_value.param_name | escape }}"
+                                value="{{ filter_value.value | escape }}"
+                                {% if filter_value.active %}checked{% endif %}
+                                {% if filter_value.count == 0 and filter_value.active == false %}disabled{% endif %}
+                              >
+                              <span class="sbf__check" aria-hidden="true"></span>
+                              <span class="sbf__swatch" aria-hidden="true"></span>
+                              <span class="sbf__option-label" data-sbf-option-label>{{ filter_value.label | escape }}</span>
+                              <span class="sbf__option-count">{{ filter_value.count }}</span>
+                            </label>
+                          {% endfor %}
+                        </div>
+
+                      {% when 'price_range' %}
+                        <div class="sbf__price">
+                          <label>
+                            <span>{{ 'filters.price_from' | t }}</span>
+                            <span class="sbf__money-input">
+                              <span>{{ cart.currency.symbol }}</span>
+                              <input type="number" name="{{ filter.min_value.param_name | escape }}" value="{% if filter.min_value.value %}{{ filter.min_value.value | money_without_currency | replace: ',', '' }}{% endif %}" min="0" max="{{ filter.range_max | money_without_currency | replace: ',', '' }}" placeholder="0">
+                            </span>
+                          </label>
+                          <label>
+                            <span>{{ 'filters.price_to' | t }}</span>
+                            <span class="sbf__money-input">
+                              <span>{{ cart.currency.symbol }}</span>
+                              <input type="number" name="{{ filter.max_value.param_name | escape }}" value="{% if filter.max_value.value %}{{ filter.max_value.value | money_without_currency | replace: ',', '' }}{% endif %}" min="0" max="{{ filter.range_max | money_without_currency | replace: ',', '' }}" placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}">
+                            </span>
+                          </label>
+                          {% if block.settings.auto_apply %}<button class="sbf__price-apply" type="submit">{{ 'filters.apply_price' | t }}</button>{% endif %}
+                        </div>
+                    {% endcase %}
+                  </div>
+                </details>
+              {% endfor %}
+            </div>
+
+            <p class="sbf__editor-notice" data-sbf-editor-notice hidden></p>
+
+            {% unless block.settings.auto_apply %}
+              <div class="sbf__actions">
+                {% if active_filter_count > 0 %}<a class="sbf__clear" href="{{ collection.url }}">{{ 'filters.clear_all' | t }}</a>{% endif %}
+                <button class="sbf__apply" type="submit">{{ 'filters.apply' | t }}</button>
+              </div>
+            {% endunless %}
+          </form>
+        </aside>
+
+        <section class="sbf__results" aria-label="{{ collection.title | escape }}">
+          <div class="sbf__toolbar">
+            <button class="sbf__mobile-open" type="button" aria-controls="{{ filter_form_id }}-panel" aria-expanded="false">
+              <span aria-hidden="true">&#9776;</span> {{ 'filters.open' | t }}
+            </button>
+
+            {% if block.settings.show_product_count %}
+              <p class="sbf__product-count" aria-live="polite">{{ 'filters.product_count' | t: count: collection.products_count }}</p>
+            {% endif %}
+
+            {% if block.settings.show_sort %}
+              <label class="sbf__sort">
+                <span>{{ 'filters.sort_by' | t }}</span>
+                <select form="{{ filter_form_id }}" data-sbf-sort>
+                  {% for option in collection.sort_options %}
+                    <option value="{{ option.value | escape }}"{% if option.value == current_sort %} selected{% endif %}>{{ option.name | escape }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+            {% endif %}
+          </div>
+
+          <div class="sbf__active" aria-label="{{ 'filters.active' | t | escape }}">
+            {% for filter in collection.filters %}
+              {% if filter.type == 'price_range' %}
+                {% if filter.min_value.value or filter.max_value.value %}
+                  <a class="sbf__chip" href="{{ filter.url_to_remove }}">
+                    {{ filter.label | escape }}: {{ filter.min_value.value | default: 0 | money }} - {{ filter.max_value.value | default: filter.range_max | money }}
+                    <span aria-hidden="true">&times;</span>
+                  </a>
+                {% endif %}
+              {% else %}
+                {% for active_value in filter.active_values %}
+                  <a class="sbf__chip" href="{{ active_value.url_to_remove }}">
+                    {{ filter.label | escape }}: {{ active_value.label | escape }}
+                    <span aria-hidden="true">&times;</span>
+                  </a>
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          {% if collection.products.size > 0 %}
+            <div class="sbf__product-grid">
+              {% for product in collection.products %}
+                <article class="sbf__card">
+                  <a class="sbf__card-media" href="{{ product.url | within: collection }}">
+                    {% if product.featured_image %}
+                      {{ product.featured_image | image_url: width: 720 | image_tag: loading: 'lazy', widths: '240, 360, 480, 720', sizes: '(min-width: 990px) 25vw, 50vw', alt: product.featured_image.alt }}
+                    {% else %}
+                      {{ 'product-1' | placeholder_svg_tag: 'sbf__placeholder' }}
+                    {% endif %}
+                    {% unless product.available %}<span class="sbf__badge">{{ 'products.sold_out' | t }}</span>{% endunless %}
+                    {% if product.compare_at_price > product.price and product.available %}<span class="sbf__badge sbf__badge--sale">{{ 'products.sale' | t }}</span>{% endif %}
+                  </a>
+                  <div class="sbf__card-content">
+                    {% if block.settings.show_vendor %}<p class="sbf__vendor">{{ product.vendor | escape }}</p>{% endif %}
+                    <h3><a href="{{ product.url | within: collection }}">{{ product.title | escape }}</a></h3>
+                    <div class="sbf__price-row">
+                      <span>{{ product.price | money }}</span>
+                      {% if product.compare_at_price > product.price %}<s>{{ product.compare_at_price | money }}</s>{% endif %}
+                    </div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="sbf__empty">
+              <h2>{{ 'products.no_results' | t }}</h2>
+              <a href="{{ collection.url }}">{{ 'filters.clear_all' | t }}</a>
+            </div>
+          {% endif %}
+
+          {% if paginate.pages > 1 %}
+            <nav class="sbf__pagination" aria-label="{{ 'products.pagination' | t | escape }}">
+              {% for part in paginate.parts %}
+                {% if part.is_link %}
+                  <a href="{{ part.url }}">{{ part.title }}</a>
+                {% else %}
+                  <span{% if part.title == paginate.current_page %} aria-current="page"{% endif %}>{{ part.title }}</span>
+                {% endif %}
+              {% endfor %}
+            </nav>
+          {% endif %}
+        </section>
+      </div>
+    {% endpaginate %}
+  </sobooster-filters>
+{% endif %}
+
+{% schema %}
+{
+  "name": "t:blocks.collection_filters.name",
+  "target": "section",
+  "stylesheet": "sobooster-filters.css",
+  "javascript": "sobooster-filters.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "proxy_path",
+      "label": "t:blocks.collection_filters.settings.proxy_path",
+      "info": "t:blocks.collection_filters.settings.proxy_path_info",
+      "default": "/apps/sobooster-filters"
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_apply",
+      "label": "t:blocks.collection_filters.settings.auto_apply",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sort",
+      "label": "t:blocks.collection_filters.settings.show_sort",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_count",
+      "label": "t:blocks.collection_filters.settings.show_product_count",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "t:blocks.collection_filters.settings.show_vendor",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "desktop_columns",
+      "label": "t:blocks.collection_filters.settings.desktop_columns",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "t:blocks.collection_filters.settings.products_per_page",
+      "min": 8,
+      "max": 48,
+      "step": 4,
+      "default": 24
+    }
+  ]
+}
+{% endschema %}

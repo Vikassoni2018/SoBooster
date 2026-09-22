@@ -1,0 +1,32 @@
+client_id = "a20f784ee3eaa7c40575944a47aa57b1"
+name = "SoBooster"
+handle = "sobooster-fillter-a20f784e"
+application_url = "https://lj95svpc-3005.inc1.devtunnels.ms"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2026-07"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "/webhooks/app/uninstalled"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "/webhooks/compliance"
+
+[access_scopes]
+scopes = "read_products,write_app_proxy"
+
+[auth]
+redirect_urls = [
+  "https://lj95svpc-3005.inc1.devtunnels.ms/api/auth/callback"
+]
+
+[app_proxy]
+url = "/storefront/filters"
+prefix = "apps"
+subpath = "sobooster-filters"

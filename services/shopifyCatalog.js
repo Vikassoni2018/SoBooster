@@ -130,9 +130,11 @@ async function fetchCollections(shop) {
       if (!node?.title) return;
 
       values.push({
-        value: node.title,
+        value: node.handle,
+        label: node.title,
         count: node.productsCount ? Number(node.productsCount.count) : null,
         handle: node.handle,
+        url: `/collections/${node.handle}`,
       });
     });
 
@@ -248,15 +250,28 @@ function valuesFromTagPrefix(tags, prefix) {
 
   if (!needle) return [];
 
-  const matched = tags
+  const seen = new Set();
+  const prefixLength = String(prefix).trim().length;
+
+  return tags
     .map((entry) => (typeof entry === "string" ? entry : entry.value))
     .filter((tag) => String(tag).toLowerCase().startsWith(needle))
-    .map((tag) => String(tag).slice(needle.length).trim())
-    .filter(Boolean)
-    // "material:cotton" reads better in a filter panel as "Cotton".
-    .map((value) => value.charAt(0).toUpperCase() + value.slice(1));
+    .map((tag) => {
+      const value = String(tag).trim();
+      const suffix = value.slice(prefixLength).trim();
 
-  return asOptions(matched);
+      return {
+        value,
+        label: suffix ? suffix.charAt(0).toUpperCase() + suffix.slice(1) : "",
+        count: null,
+      };
+    })
+    .filter((entry) => {
+      const key = entry.value.toLowerCase();
+      if (!entry.label || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 /** Prefixes that look like a convention, offered when adding a custom group. */

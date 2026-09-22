@@ -1,0 +1,7 @@
+name = "SoBooster web"
+roles = ["frontend", "backend"]
+auth_callback_path = ["/api/auth/callback"]
+webhooks_path = "/webhooks/app/uninstalled"
+
+[commands]
+dev = "npm run dev"
