@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include("partials/head") %>
+  <title>Filters</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+
+<%#
+  Filter settings.
+
+  The markup here is the SHELL. The group list and the editor are drawn by
+  public/javascript/filters.js from the configuration handed over at the
+  bottom, and redrawn from the server's response after every change -- so what
+  is on screen is always what was saved, never an optimistic guess.
+%>
+
+<body>
+  <%- include("partials/nav") %>
+
+  <main class="shell shell--wide">
+
+    <header class="shell__header">
+      <div>
+        <h1>Filters</h1>
+        <p class="shell__sub">
+          Choose which filters your storefront offers and how they appear.
+          Values are read from your Shopify products.
+        </p>
+      </div>
+      <div class="shell__actions">
+        <span class="muted" id="catalogue-age"></span>
+        <button class="btn btn--quiet" type="button" id="refresh">Refresh from Shopify</button>
+      </div>
+    </header>
+
+    <p class="notice notice--error" id="page-error" hidden></p>
+    <p class="notice notice--warn" id="page-warn" hidden></p>
+
+    <div class="settings">
+
+      <%# Left: the groups, in storefront order. %>
+      <section class="settings__list" aria-label="Filter groups">
+        <div class="settings__list-head">
+          <h2 class="panel__title">Filter groups</h2>
+          <button class="btn btn--small" type="button" id="add-group">Add filter</button>
+        </div>
+
+        <ul class="group-list" id="group-list"></ul>
+
+        <p class="muted settings__hint">
+          Drag to reorder. The order here is the order shoppers see.
+        </p>
+      </section>
+
+      <%# Right: everything about the selected group. %>
+      <section class="settings__editor" id="editor" aria-live="polite"></section>
+
+    </div>
+
+  </main>
+
+  <%# Add-filter dialog. A native <dialog> so Escape and focus trapping are
+      the browser's job rather than ours. %>
+  <dialog class="modal" id="add-dialog">
+    <form method="dialog" class="modal__body" id="add-form">
+      <h2 class="modal__title">Add a filter</h2>
+
+      <div class="field">
+        <label class="field__label" for="add-source">Read values from</label>
+        <select class="field__input" id="add-source"></select>
+        <p class="field__help" id="add-source-help"></p>
+      </div>
+
+      <div class="field" id="add-key-field" hidden>
+        <label class="field__label" for="add-key">Tag prefix</label>
+        <input class="field__input" id="add-key" type="text" placeholder="material:" autocomplete="off">
+        <p class="field__help">
+          Tags starting with this become the filter's values.
+          <code>material:cotton</code> shows as <code>Cotton</code>.
+        </p>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="add-label">Name shown to shoppers</label>
+        <input class="field__input" id="add-label" type="text" maxlength="128" autocomplete="off">
+      </div>
+
+      <p class="notice notice--error" id="add-error" hidden></p>
+
+      <div class="modal__actions">
+        <button class="btn btn--quiet" type="button" id="add-cancel">Cancel</button>
+        <button class="btn btn--primary" type="submit" id="add-save">Add filter</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script id="bootstrap" type="application/json"><%- json({ groups: groups, sources: sources, allowedDisplay: allowedDisplay }) %></script>
+  <script src="/javascript/filters.js"></script>
+</body>
+
+</html>

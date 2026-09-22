@@ -1,0 +1,15 @@
+<!-- App Bridge renders this as the app's admin nav and keeps the session
+     token on each navigation. No JS wiring is needed.
+
+     Add a feature screen by adding a route, a controller, a view, and one
+     more <s-link> here:
+       <s-link href="/widgets">Widgets</s-link>
+-->
+<s-app-nav>
+  <s-link href="/dashboard" rel="home">Dashboard</s-link>
+  <s-link href="/filters">Filters</s-link>
+  <s-link href="/plans">Plans</s-link>
+  <s-link href="/support">Help and support</s-link>
+</s-app-nav>
+
+<%- include("brand") %>

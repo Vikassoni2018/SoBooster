@@ -1,0 +1,824 @@
+/* app.css — the SoBooster admin screens.
+   Rendered inside the Shopify admin iframe, so the layout stays close to the
+   admin's own; the brand shows in the accents rather than the furniture.
+   Every colour is a token below: change those and the whole app follows. */
+
+:root {
+  /* Brand. Change these three and every button, focus ring and accent
+     follows. Nothing below hard-codes the blue. */
+  --brand: #0b5368;
+  --brand-dark: #083f50; /* hover / pressed */
+  --brand-soft: #e7f2f5; /* tinted backgrounds */
+
+  --bg: #f6f6f6;
+  --surface: #ffffff;
+  --line: #d9dbe0;
+  --line-soft: #ececf0;
+  --text: #1a1a1a;
+  --muted: #6b6f76;
+  --accent: var(--brand);
+
+  /* Semantic, not brand: green still means "done" and red "wrong", whatever
+     colour the logo happens to be. Each has a tint for notices. */
+  --ok: #0f7b46;
+  --ok-bg: #eef8f2;
+  --ok-line: #bfe3ce;
+  --danger: #b3261e;
+  --danger-bg: #fdf1f0;
+  --danger-line: #e6c4c1;
+  --waiting: #d9a400;
+  --waiting-ink: #6b4a00;
+  --waiting-bg: #fff8e6;
+  --waiting-line: #f0dca8;
+
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 18, 22, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+}
+
+/* ---------------- layout ---------------- */
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: calc(100% - 1.5rem);
+  margin: 1rem auto 0;
+}
+
+.shell > .app-brand {
+  width: 100%;
+  margin: 0 0 1.25rem;
+}
+
+.app-brand__logo {
+  display: block;
+  flex: 0 0 auto;
+  border-radius: 8px;
+}
+
+.app-brand__name {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.shell {
+  max-width: none;
+  margin: 0 auto;
+  padding: 1.75rem 0.75rem 4rem;
+}
+
+.shell--wide {
+  max-width: none;
+}
+
+.shell__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.shell__header h1 {
+  margin: 0.15rem 0 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.shell__sub {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.shell__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ---------------- panels ---------------- */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.15rem;
+}
+
+.panel__title {
+  margin: 0 0 0.9rem;
+  font-size: 1.02rem;
+}
+
+.panel__copy {
+  margin: 0 0 0.9rem;
+  max-width: 60ch;
+  color: var(--muted);
+}
+
+/* ---------------- form controls ---------------- */
+
+.field {
+  display: block;
+  margin-bottom: 0.85rem;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.field__label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.field__input {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.field__input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+.field__help {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.field__help code {
+  background: var(--line-soft);
+  padding: 0 0.25rem;
+  border-radius: 4px;
+}
+
+/* ---------------- buttons ---------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.38rem 0.72rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  background: #303030;
+  border: 1px solid #1f1f1f;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  background: #1f1f1f;
+  border-color: #111;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ---------------- plans ---------------- */
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  min-height: 20rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.plan--popular {
+  border-color: #8bb8f0;
+  box-shadow: 0 0 0 1px #8bb8f0;
+}
+
+.plan__heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.plan h2 {
+  margin: 0;
+  font-size: 1.12rem;
+}
+
+.plan__badge {
+  padding: 0.18rem 0.55rem;
+  color: #fff;
+  background: #3b82f6;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.plan__price {
+  margin: 1rem 0 1.25rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.plan__price span {
+  color: var(--brand);
+  font-size: 2.4rem;
+  font-weight: 400;
+}
+
+.plan__features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0 0 1.35rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.plan__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.plan__features li::before {
+  content: "✓";
+  display: inline-grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.1rem;
+  flex: 0 0 auto;
+  color: #fff;
+  background: #3b82f6;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.plan__select,
+.plan__current {
+  width: 100%;
+  margin-top: auto;
+}
+
+.plan__current {
+  display: block;
+  padding: 0.45rem 0.65rem;
+  color: var(--ok);
+  background: var(--ok-bg);
+  border: 1px solid var(--ok-line);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ---------------- filter settings ---------------- */
+
+/* A save is in flight. The screen stays usable and readable; it just stops
+   looking interactive, so a second click on the same toggle is discouraged
+   without anything jumping. */
+body.is-busy .settings {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.btn--quiet {
+  color: #303030;
+  background: #e5e5e7;
+  border-color: transparent;
+}
+
+.btn--quiet:hover:not(:disabled) {
+  background: #dcdcdf;
+  border-color: transparent;
+}
+
+.btn--small {
+  min-height: 1.75rem;
+  padding: 0.3rem 0.58rem;
+  font-size: 0.78rem;
+}
+
+.btn--danger {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-line);
+}
+
+.btn--danger:hover:not(:disabled) {
+  color: #8e1b15;
+  background: #f9dfdd;
+  border-color: #dba5a0;
+}
+
+.icon-btn {
+  padding: 0.15rem 0.4rem;
+  font: inherit;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  background: var(--line-soft);
+}
+
+.field__input--compact {
+  width: 6rem;
+}
+
+.field__input--select {
+  width: auto;
+  min-width: 12rem;
+}
+
+.field__static {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* A label and its explanation on the left, the switch on the right. */
+.field--switch {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.field--switch .field__help {
+  max-width: 44ch;
+  margin-top: 0.15rem;
+}
+
+/* ---- the switch ---- */
+
+.switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 2.3rem;
+  height: 1.3rem;
+  cursor: pointer;
+}
+
+.switch__input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switch__track {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #c9ccd1;
+  border-radius: 999px;
+  transition: background 120ms ease-in;
+  pointer-events: none;
+}
+
+.switch__track::after {
+  content: "";
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 120ms ease-in;
+}
+
+.switch__input:checked ~ .switch__track {
+  background: var(--brand);
+}
+
+.switch__input:checked ~ .switch__track::after {
+  transform: translateX(1rem);
+}
+
+.switch__input:focus-visible ~ .switch__track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- two-pane layout ---- */
+
+.settings {
+  display: grid;
+  grid-template-columns: 19rem minmax(0, 1fr);
+  gap: 1.15rem;
+  align-items: start;
+}
+
+.settings__list {
+  position: sticky;
+  top: 0.75rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.settings__list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.settings__list-head .panel__title {
+  margin: 0;
+}
+
+.settings__hint {
+  margin: 0.75rem 0 0;
+}
+
+.group-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.35rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.group + .group {
+  margin-top: 0.15rem;
+}
+
+.group:hover {
+  background: #fafafb;
+}
+
+.group--on {
+  background: var(--brand-soft);
+  border-color: #bcd9e2;
+}
+
+.group--on:hover {
+  background: var(--brand-soft);
+}
+
+.group--dragging {
+  opacity: 0.45;
+}
+
+.group__grip {
+  flex: 0 0 auto;
+  color: var(--muted);
+  cursor: grab;
+  user-select: none;
+}
+
+.group__pick {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0.1rem;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.group__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group__meta {
+  color: var(--muted);
+  font-size: 0.76rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- editor ---- */
+
+.settings__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.editor__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.editor__title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.editor__head .muted {
+  margin: 0.2rem 0 0;
+}
+
+.editor__panel .field:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- values ---- */
+
+.values__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.values__head p {
+  margin: 0;
+}
+
+.values {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.value {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+}
+
+.value + .value {
+  border-top: 1px solid var(--line-soft);
+}
+
+.value:hover {
+  background: #fafafb;
+}
+
+/* Hidden values stay in the list, dimmed: the merchant has to be able to see
+   them to bring them back. */
+.value--off {
+  background: #fbfbfc;
+  color: var(--muted);
+}
+
+.value__show {
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.value__swatch {
+  flex: 0 0 auto;
+  width: 1.8rem;
+  height: 1.6rem;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.value__text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.value__label {
+  padding: 0.28rem 0.4rem;
+  font-size: 0.87rem;
+  background: transparent;
+  border-color: transparent;
+}
+
+.value__label:hover {
+  background: #fff;
+  border-color: var(--line);
+}
+
+.value__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-left: 0.4rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* The value as Shopify spells it, shown when the merchant has renamed it. */
+.value__raw {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.value__gone {
+  color: var(--danger);
+}
+
+.value__pin {
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+  color: var(--line);
+}
+
+.value__pin:hover {
+  color: var(--waiting);
+}
+
+.value__pin.is-on {
+  color: var(--waiting);
+}
+
+/* ---- add-filter dialog ---- */
+
+.modal {
+  width: min(30rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: 0 18px 48px rgba(16, 18, 22, 0.28);
+}
+
+.modal::backdrop {
+  background: rgba(16, 18, 22, 0.42);
+}
+
+.modal__body {
+  padding: 1.25rem;
+}
+
+.modal__title {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+}
+
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 3rem 1.25rem;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.empty h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.empty p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ---- narrow screens: the two panes stack ---- */
+
+@media (max-width: 900px) {
+  .settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings__list {
+    position: static;
+  }
+
+  .field--switch {
+    align-items: center;
+  }
+
+  .value {
+    flex-wrap: wrap;
+  }
+
+  .value__text {
+    flex-basis: 60%;
+  }
+}
+
+/* ---------------- notices ---------------- */
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.notice[hidden] {
+  display: none;
+}
+
+.notice--warn {
+  color: var(--waiting-ink);
+  background: var(--waiting-bg);
+  border-color: var(--waiting-line);
+}
+
+.notice--error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-line);
+}
+
+.notice--success {
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-color: var(--ok-line);
+}
