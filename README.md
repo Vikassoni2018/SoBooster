@@ -54,6 +54,10 @@ this app   owns what was DECIDED     shown, renamed, reordered, swatched
 Requires **Node.js 18+** and **MySQL or MariaDB**. Developed against MariaDB
 10.4 (XAMPP) and Shopify Admin API `2026-07`.
 
+### Local setup
+
+1. Clone the repository and install dependencies:
+
 ```bash
 git clone <this repo>
 cd SoBooster
@@ -61,13 +65,17 @@ npm install
 cp .env.example .env
 ```
 
-Create the database (tables are created for you, the database itself is not):
+On Windows PowerShell, use `Copy-Item .env.example .env` instead of `cp`.
+
+2. Start MySQL/MariaDB and create an empty local database. The application
+   creates and updates its tables automatically, but it does not create the
+   database itself:
 
 ```sql
 CREATE DATABASE SoBooster DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Fill in `.env`:
+3. Fill in `.env`:
 
 | Variable | Notes |
 | --- | --- |
@@ -79,22 +87,57 @@ Fill in `.env`:
 | `DUMMY_SHOPS` | Optional, comma-separated. Development stores that get a Shopify **test** charge rather than a real one. |
 | `FILTER_SCAN_PAGES` | Optional. How many 250-product pages to walk when collecting option values. Default 20 (5,000 products). |
 
+Generate `TOKEN_ENCRYPTION_KEY` once and paste the result into `.env`:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-npm run dev     # or: npm start
 ```
 
-Shopify has to reach `HOST`, so for local work expose the port with a tunnel
-(VS Code dev tunnels, cloudflared, ngrok), set `HOST` and the Partner Dashboard
-URLs to the tunnel address, then install on a development store and open the
-app from **Apps** in the Shopify admin.
+4. Expose local port `3005` (or the configured `PORT`) through an HTTPS tunnel
+   such as VS Code dev tunnels, cloudflared, or ngrok. Set `HOST` to that public
+   URL with no trailing slash.
 
-There is nothing to seed. On first open the app creates five default filter
-groups and reads the shop's catalogue.
+5. In the Shopify Partner Dashboard, set the App URL to `HOST` and add
+   `HOST/api/auth/callback` as an allowed redirect URL. Add the development
+   store domain to `DUMMY_SHOPS` so subscription tests do not create real
+   charges.
 
-The repository is also a Shopify CLI project. After signing in with an account
-that can manage the app, use `shopify app dev` for a development preview or
-`shopify app deploy` to release the app configuration and theme extension.
+6. Start the application, install it on the development store, and open it
+   from **Apps** in Shopify admin:
+
+```bash
+npm run dev
+```
+
+The first start runs `config/migrate.js`, creates the tables, and seeds the
+Free, Starter, and Pro plan rows. The first app open creates five default
+filter groups and reads filter values from the store's Shopify catalogue.
+There is no product data to import or seed locally.
+
+### Production setup
+
+1. Provision Node.js 18+ and a MySQL/MariaDB database, then create an empty
+   database with the same `CREATE DATABASE` statement shown above.
+2. Install production dependencies with `npm ci --omit=dev`.
+3. Set the environment variables listed above. Use the production database
+   credentials, a permanent HTTPS `HOST`, and a securely generated
+   `TOKEN_ENCRYPTION_KEY`. Back up the encryption key; changing or losing it
+   makes stored Shopify tokens unreadable.
+4. Leave `DUMMY_SHOPS` empty in production so paid subscriptions use real
+   Shopify charges.
+5. Set the production App URL and allowed redirect URL in the Shopify Partner
+   Dashboard, then deploy the Shopify app configuration and theme extension:
+
+```bash
+shopify app deploy
+```
+
+6. Start the web process with `npm start`. Startup migrations are idempotent,
+   so the same command creates missing tables and brings an existing database
+   to the current structure.
+
+For a Shopify CLI development preview, sign in with an account that can manage
+the app and run `shopify app dev`.
 
 ---
 
@@ -219,6 +262,24 @@ The merchant refreshes explicitly; the header shows how old the values are.
 
 ## Database
 
+### Creating the local structure
+
+The recommended path is to create only the empty `SoBooster` database and run
+`npm run dev` or `npm start`. On every startup, `config/migrate.js` creates
+missing tables, applies compatible schema changes, seeds the three plans, and
+registers any stores listed in `DUMMY_SHOPS`.
+
+To build a fresh database manually instead, run the reference schema:
+
+```bash
+mysql -u root -p < sql/schema.sql
+```
+
+Do not run both methods for the same fresh setup; they produce the same table
+shape. The startup migration remains the source of truth for later changes.
+
+### Structure
+
 | Table | Holds |
 | --- | --- |
 | `filter_groups` | One configurable group. `source` says where values come from, `filter_key` is the storefront query-string key. |
@@ -228,9 +289,28 @@ The merchant refreshes explicitly; the header shows how old the values are.
 | `dummy_shops` | Development stores that get a Shopify test charge. |
 | `plans`, `user_memberships`, `membership_payments` | Subscription billing. |
 
-`config/migrate.js` creates them on boot; `sql/schema.sql` is the same shape as
-one script. Storing overrides sparsely is what lets a shop add a new colour and
-have it appear in the panel automatically, with no sync step.
+The main relationships are:
+
+```text
+stores
+|-- filter_groups -- filter_options
+|-- filter_source_cache
+|-- user_memberships -- membership_payments
+`-- membership_payments
+
+plans -- user_memberships
+```
+
+All store-owned records are scoped through `stores.id`. Deleting a store
+cascades to its filter, membership, payment, and cache records; deleting a
+filter group cascades to its option overrides. A plan referenced by a
+membership cannot be deleted.
+
+The application intentionally has no local `products` table. Shopify remains
+the source of truth for products, collections, vendors, types, tags, and
+options. Only filter settings, sparse value overrides, and a refreshable source
+cache are stored locally. This lets a new Shopify product value appear without
+a product-sync job.
 
 ---
 
